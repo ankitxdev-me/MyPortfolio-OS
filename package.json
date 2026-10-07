@@ -4,12 +4,12 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=18.14.1 <23"
+    "node": "20.x"
   },
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro check && astro build && node -e \"const fs=require('fs');const g=d=>!fs.existsSync(d)?[]:fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?g(d+'/'+e.name):e.name==='.vc-config.json'?[d+'/'+e.name]:[]);g('.vercel/output/functions').forEach(p=>{const c=JSON.parse(fs.readFileSync(p,'utf8'));if(c.runtime==='nodejs18.x'){c.runtime='nodejs20.x';fs.writeFileSync(p,JSON.stringify(c,null,2));console.log('Patched runtime to nodejs20.x:',p);}});\"",
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check"
