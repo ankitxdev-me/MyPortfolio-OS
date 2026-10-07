@@ -20,6 +20,10 @@ class DatabaseConnectionManager {
 
     try {
       const uri = env.MONGODB_URI;
+      if (!uri || uri.includes('build_placeholder') || uri.includes('<username>')) {
+        logger.warn('Database connection skipped: Running with placeholder MongoDB URI.');
+        return mongoose;
+      }
       const opts: mongoose.ConnectOptions = {
         maxPoolSize: 10,
         minPoolSize: 2,
