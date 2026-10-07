@@ -137,7 +137,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   return (
     <aside
       className={cn(
-        'border-r border-border bg-background p-4 flex flex-col justify-between h-full min-h-screen transition-all duration-300',
+        'sticky top-0 h-screen max-h-screen shrink-0 border-r border-border bg-background p-4 flex flex-col justify-between overflow-y-auto transition-all duration-300 z-30 select-none',
         collapsed ? 'w-20' : 'w-64',
         className
       )}

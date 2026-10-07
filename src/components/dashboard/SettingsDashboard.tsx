@@ -99,30 +99,30 @@ export const SettingsDashboard: React.FC = () => {
 
         const gh = Array.isArray(s.socialLinks)
           ? s.socialLinks.find((item: any) => item.platform === 'github')?.url
-          : s.socialLinks?.github || s.githubUrl;
-        if (gh) setGithubUrl(gh);
+          : s.socialLinks?.github ?? s.githubUrl;
+        if (gh !== undefined && gh !== null) setGithubUrl(gh);
 
         const li = Array.isArray(s.socialLinks)
           ? s.socialLinks.find((item: any) => item.platform === 'linkedin')?.url
-          : s.socialLinks?.linkedin || s.linkedinUrl;
-        if (li) setLinkedinUrl(li);
+          : s.socialLinks?.linkedin ?? s.linkedinUrl;
+        if (li !== undefined && li !== null) setLinkedinUrl(li);
 
         const tw = Array.isArray(s.socialLinks)
           ? s.socialLinks.find((item: any) => item.platform === 'twitter')?.url
-          : s.socialLinks?.twitter || s.twitterUrl;
-        if (tw) setTwitterUrl(tw);
+          : s.socialLinks?.twitter ?? s.twitterUrl;
+        if (tw !== undefined && tw !== null) setTwitterUrl(tw);
 
         const lc = Array.isArray(s.socialLinks)
           ? s.socialLinks.find((item: any) => item.platform === 'leetcode')?.url
-          : s.socialLinks?.leetcode || s.leetcodeUrl;
-        if (lc) setLeetcodeUrl(lc);
+          : s.socialLinks?.leetcode ?? s.leetcodeUrl;
+        if (lc !== undefined && lc !== null) setLeetcodeUrl(lc);
 
         const gc = Array.isArray(s.socialLinks)
           ? s.socialLinks.find(
               (item: any) => item.platform === 'googlecloud' || item.platform === 'google_cloud' || item.platform === 'gcp'
             )?.url
-          : s.socialLinks?.googleCloud || s.googleCloudUrl;
-        if (gc) setGoogleCloudUrl(gc);
+          : s.socialLinks?.googleCloud ?? s.googleCloudUrl;
+        if (gc !== undefined && gc !== null) setGoogleCloudUrl(gc);
       }
     } catch (err: any) {
       setNotification({ type: 'error', message: err?.message || 'Failed to fetch global site settings' });

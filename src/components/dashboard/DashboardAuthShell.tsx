@@ -16,12 +16,12 @@ const InnerShell: React.FC<InnerShellProps> = ({ currentPath, title, children, u
   const { logout } = useAuth();
 
   return (
-    <>
-      {/* Sidebar Shell — receives logout from AuthContext */}
+    <div className="flex w-full h-screen overflow-hidden">
+      {/* Sidebar Shell — receives logout from AuthContext and stays locked */}
       <DashboardSidebar currentPath={currentPath} onLogout={logout} />
 
-      {/* Main CMS Shell */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      {/* Main CMS Shell — contains scrollable page content */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <DashboardHeader title={title} userName={userName} />
         <main
           id="main-content"
@@ -30,7 +30,7 @@ const InnerShell: React.FC<InnerShellProps> = ({ currentPath, title, children, u
           {children}
         </main>
       </div>
-    </>
+    </div>
   );
 };
 

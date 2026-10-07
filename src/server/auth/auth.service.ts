@@ -59,7 +59,7 @@ class AuthService {
       throw new UnauthorizedError('Invalid email or password credentials');
     }
 
-    const { session, token } = sessionStore.createSession(adminUser.id, rememberMe);
+    const { session, token } = sessionStore.createSession(adminUser.id, rememberMe, adminUser);
     logger.info(`Login success: Administrator [${adminUser.email}] authenticated. Session ID: ${session.id.substring(0, 8)}...`);
 
     const permissions = PermissionManager.getPermissionsForRole(adminUser.role as UserRole);
@@ -79,6 +79,10 @@ class AuthService {
 
     const session = sessionStore.getSession(token);
     if (!session) return null;
+
+    if (session.user) {
+      return session.user;
+    }
 
     const adminUser = this.getAdminUser();
     if (session.userId !== adminUser.id) return null;

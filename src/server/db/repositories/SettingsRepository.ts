@@ -12,11 +12,15 @@ export class SettingsRepository extends MongooseBaseRepository<SiteSettings & { 
   }
 
   public async updateGlobalSettings(data: Partial<SiteSettings>): Promise<(SiteSettings & { id: string }) | null> {
-    const existing = await this.getGlobalSettings();
-    if (!existing) {
-      return this.create({ ...data, key: 'global_site_settings' } as unknown as Partial<SiteSettings & { id: string }>);
-    }
-    return this.update(existing.id, data);
+    const updated = await this.model
+      .findOneAndUpdate(
+        { key: 'global_site_settings' },
+        { $set: { ...data, key: 'global_site_settings' } },
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+      )
+      .lean()
+      .exec();
+    return this.toDomain(updated as unknown as ISettingsDocument);
   }
 }
 

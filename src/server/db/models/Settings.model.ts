@@ -18,7 +18,12 @@ export interface ISettingsDocument extends Document {
   currentProjectStatus?: string;
   currentProjectId?: string;
   currentProjectSlug?: string;
-  socialLinks: { platform: string; url: string; icon: string }[];
+  githubUrl?: string;
+  linkedinUrl?: string;
+  twitterUrl?: string;
+  leetcodeUrl?: string;
+  googleCloudUrl?: string;
+  socialLinks: { platform: string; url: string; icon: string; label?: string }[];
   seoDefaults: { metaTitle: string; metaDescription: string; ogImage: string; keywords: string[] };
   analytics: { enabled: boolean; trackingId?: string };
   updatedAt: Date;
@@ -29,7 +34,7 @@ const SettingsSchema = new Schema<ISettingsDocument>(
     key: { type: String, required: true, unique: true, default: 'global_site_settings', index: true },
     siteName: { type: String, required: true, default: 'Portfolio OS' },
     siteTitle: { type: String, required: true, default: 'Ankit Gupta — Lead Full-Stack & AI Engineer' },
-    siteDescription: { type: String, required: true },
+    siteDescription: { type: String, default: 'Production-grade Personal Portfolio Operating System for Ankit Gupta.' },
     contactEmail: { type: String, default: 'ankitgupta72724@gmail.com' },
     location: { type: String, default: 'Pune, India / Remote' },
     authorName: { type: String, required: true, default: 'Ankit Gupta' },
@@ -50,7 +55,12 @@ const SettingsSchema = new Schema<ISettingsDocument>(
     currentProjectStatus: { type: String, default: 'Sprint 3 Active' },
     currentProjectId: { type: String, default: '' },
     currentProjectSlug: { type: String, default: '' },
-    socialLinks: [{ platform: String, url: String, icon: String }],
+    githubUrl: { type: String, default: '' },
+    linkedinUrl: { type: String, default: '' },
+    twitterUrl: { type: String, default: '' },
+    leetcodeUrl: { type: String, default: '' },
+    googleCloudUrl: { type: String, default: '' },
+    socialLinks: [{ platform: String, url: String, icon: String, label: String }],
     seoDefaults: {
       metaTitle: String,
       metaDescription: String,
@@ -64,6 +74,7 @@ const SettingsSchema = new Schema<ISettingsDocument>(
   },
   {
     timestamps: true,
+    strict: false,
   }
 );
 
