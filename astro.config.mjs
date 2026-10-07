@@ -2,6 +2,9 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 import node from '@astrojs/node';
+import vercel from '@astrojs/vercel/serverless';
+
+const isVercel = Boolean(process.env.VERCEL);
 
 // https://astro.build/config
 export default defineConfig({
@@ -9,9 +12,11 @@ export default defineConfig({
     enabled: false,
   },
   output: 'server',
-  adapter: node({
-    mode: 'standalone',
-  }),
+  adapter: isVercel
+    ? vercel()
+    : node({
+        mode: 'standalone',
+      }),
   integrations: [
     react(),
     tailwind({

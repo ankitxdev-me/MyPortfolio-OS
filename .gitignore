@@ -17,6 +17,7 @@ node_modules/
 dist/
 build/
 .astro/
+.vercel/
 
 # Logs & Temporary Files
 npm-debug.log*
