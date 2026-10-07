@@ -1,0 +1,149 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import { ContactForm } from '@/components/contact/ContactForm';
+import { SocialLinks, type SocialLinkItem } from '@/components/contact/SocialLinks';
+import { ContactFAQ } from '@/components/contact/ContactFAQ';
+import { CONTACT_FAQS } from '@/data/contactData';
+import { settingsService } from '@/server/services/settings.service';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs.astro';
+import { Mail, MapPin, Clock, MessageSquare } from 'lucide-react';
+
+let settings: any;
+try {
+  settings = await settingsService.getSettings();
+} catch (e) {
+  settings = {
+    contactEmail: (typeof process !== 'undefined' && process.env?.CONTACT_EMAIL) || 'contact@example.com',
+    location: 'Pune, India / Remote',
+    siteName: 'Portfolio OS',
+    githubUrl: 'https://github.com/ankit-gupta',
+    linkedinUrl: 'https://linkedin.com/in/ankit-gupta',
+    twitterUrl: 'https://twitter.com/ankit_dev',
+  };
+}
+
+const contactEmail = settings?.contactEmail || (typeof process !== 'undefined' && process.env?.CONTACT_EMAIL) || 'contact@example.com';
+const contactLocation = settings?.location || 'Pune, India / Remote';
+
+// Resolve social links dynamically from settings panel / database
+const githubUrl =
+  (Array.isArray(settings?.socialLinks)
+    ? settings.socialLinks.find((s: any) => s.platform === 'github')?.url
+    : settings?.socialLinks?.github) ||
+  settings?.githubUrl ||
+  'https://github.com/ankit-gupta';
+
+const linkedinUrl =
+  (Array.isArray(settings?.socialLinks)
+    ? settings.socialLinks.find((s: any) => s.platform === 'linkedin')?.url
+    : settings?.socialLinks?.linkedin) ||
+  settings?.linkedinUrl ||
+  'https://linkedin.com/in/ankit-gupta';
+
+const twitterUrl =
+  (Array.isArray(settings?.socialLinks)
+    ? settings.socialLinks.find((s: any) => s.platform === 'twitter')?.url
+    : settings?.socialLinks?.twitter) ||
+  settings?.twitterUrl ||
+  'https://twitter.com/ankit_dev';
+
+const leetcodeUrl =
+  (Array.isArray(settings?.socialLinks)
+    ? settings.socialLinks.find((s: any) => s.platform === 'leetcode')?.url
+    : settings?.socialLinks?.leetcode) ||
+  settings?.leetcodeUrl ||
+  'https://leetcode.com/u/ankitgupta';
+
+const googleCloudUrl =
+  (Array.isArray(settings?.socialLinks)
+    ? settings.socialLinks.find((s: any) => s.platform === 'googlecloud' || s.platform === 'google_cloud' || s.platform === 'gcp')?.url
+    : settings?.socialLinks?.googleCloud || settings?.socialLinks?.gcp) ||
+  settings?.googleCloudUrl ||
+  'https://www.cloudskillsboost.google/public_profiles/ankitgupta';
+
+const socialLinks: SocialLinkItem[] = [
+  { platform: 'github', url: githubUrl, label: 'GitHub' },
+  { platform: 'linkedin', url: linkedinUrl, label: 'LinkedIn' },
+  { platform: 'leetcode', url: leetcodeUrl, label: 'LeetCode' },
+  { platform: 'googlecloud', url: googleCloudUrl, label: 'Google Cloud' },
+  { platform: 'twitter', url: twitterUrl, label: 'Twitter' },
+  { platform: 'email', url: `mailto:${contactEmail}`, label: 'Email' },
+];
+---
+
+<PublicLayout
+  title="Contact & Engineering Inquiries | Portfolio OS"
+  description="Get in touch for contract engineering, full-stack consulting, software architecture reviews, or open source collaborations."
+>
+  <SectionWrapper padding="lg">
+    <Container size="lg" class="space-y-12">
+      <!-- Breadcrumbs Path -->
+      <Breadcrumbs items={[{ label: 'Contact' }]} />
+      <!-- Header Banner -->
+      <div class="space-y-4 border-b border-border/80 pb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase font-mono">
+          <MessageSquare className="w-4 h-4" /> Get In Touch
+        </div>
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground">
+          Let's <span class="orange-gradient-text">Connect</span>
+        </h1>
+        <p class="text-muted-foreground text-base md:text-lg max-w-2xl leading-relaxed">
+          Open for engineering opportunities, freelance projects, small tasks & quick bug fixes, tech collaborations, or simply chatting about software and AI.
+        </p>
+      </div>
+
+      <!-- Direct Channels Horizontal Cards Strip -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-4 rounded-xl glass-card border border-border flex items-center gap-3.5">
+          <div class="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
+            <Mail className="w-5 h-5" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-[10px] text-muted-foreground font-mono uppercase">Primary Email</div>
+            <a href={`mailto:${contactEmail}`} class="font-bold text-foreground hover:text-primary transition-colors text-xs truncate block">
+              {contactEmail}
+            </a>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl glass-card border border-border flex items-center gap-3.5">
+          <div class="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
+            <MapPin className="w-5 h-5" />
+          </div>
+          <div>
+            <div class="text-[10px] text-muted-foreground font-mono uppercase">Location</div>
+            <div class="font-bold text-foreground text-xs">{contactLocation}</div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl glass-card border border-border flex items-center gap-3.5">
+          <div class="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <div class="text-[10px] text-muted-foreground font-mono uppercase">Availability</div>
+            <div class="font-bold text-foreground text-xs">Open for Roles & Quick Tasks</div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl glass-card border border-border flex flex-col justify-center gap-1.5">
+          <div class="text-[10px] text-muted-foreground font-mono uppercase">Social Channels</div>
+          <SocialLinks client:visible links={socialLinks} />
+        </div>
+      </div>
+
+      <!-- Spacious Interactive Contact Form -->
+      <div class="p-3.5 sm:p-8 md:p-10 rounded-2xl glass-card border border-border shadow-card">
+        <ContactForm client:load />
+      </div>
+
+      <!-- Frequently Asked Questions -->
+      <div class="space-y-6 pt-4 border-t border-border/80">
+        <h2 class="text-2xl font-extrabold text-foreground tracking-tight">Frequently Asked Questions</h2>
+        <ContactFAQ client:visible faqs={CONTACT_FAQS} />
+      </div>
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

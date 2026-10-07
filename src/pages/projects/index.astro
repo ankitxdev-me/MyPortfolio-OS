@@ -1,0 +1,63 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs.astro';
+import { ProjectsExplorer } from '@/components/projects/ProjectsExplorer';
+import { projectService } from '@/server/services/project.service';
+
+export const prerender = false;
+
+const projectsRes = await projectService
+  .getPaginated({ page: 1, limit: 100 }, { published: { $ne: false }, status: { $ne: 'Draft' } })
+  .catch(() => ({ data: [] }));
+
+const rawProjects = (projectsRes.data || []).filter(
+  (p: any) => p.published !== false && p.status !== 'Draft'
+);
+
+// Show ONLY real posted projects from database (no demo data)
+const allProjectsList = rawProjects
+  .map((p: any) => {
+    const tags: string[] = Array.isArray(p.techStack)
+      ? p.techStack
+      : typeof p.techStack === 'object' && p.techStack !== null
+      ? (Object.values(p.techStack).flat().filter(Boolean) as string[])
+      : Array.isArray(p.tags) && p.tags.length > 0
+      ? p.tags
+      : [];
+
+    return {
+      id: p._id?.toString() || p.slug,
+      slug: p.slug,
+      title: p.title,
+      description: p.summary || p.description || '',
+      image:
+        p.thumbnailUrl ||
+        p.image ||
+        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop',
+      tags: tags.length > 0 ? tags.slice(0, 4) : ['TypeScript', 'React'],
+      category: p.category || 'Web',
+      featured: p.featured || false,
+      githubUrl: p.githubUrl || 'https://github.com',
+      liveUrl: p.liveUrl || p.demoUrl || `/projects/${p.slug}`,
+      status: p.status || 'Completed',
+    };
+  })
+  .sort((a: any, b: any) => {
+    if (a.featured && !b.featured) return -1;
+    if (!a.featured && b.featured) return 1;
+    return 0;
+  });
+---
+
+<PublicLayout
+  title="Projects — Ankit Gupta | Portfolio OS"
+  description="A collection of my work, side projects, and experiments."
+>
+  <div class="w-full max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 py-4 sm:py-8 md:py-12 space-y-4 sm:space-y-6">
+    <div class="hidden sm:block">
+      <Breadcrumbs items={[{ label: 'Projects' }]} />
+    </div>
+
+    <ProjectsExplorer client:load projects={allProjectsList} />
+  </div>
+</PublicLayout>

@@ -1,0 +1,268 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import { HeroSection } from '@/components/home/HeroSection';
+import { FeaturedProject } from '@/components/home/FeaturedProject';
+import { LatestArticles } from '@/components/home/LatestArticles';
+import { LearningSection } from '@/components/home/LearningSection';
+import { JourneyPreview } from '@/components/home/JourneyPreview';
+import { AcademicSection } from '@/components/home/AcademicSection';
+import { OpenSourceSection } from '@/components/home/OpenSourceSection';
+import { ContactCTA } from '@/components/home/ContactCTA';
+
+// Server-side backend queries for homepage content
+import { projectService } from '@/server/services/project.service';
+import { blogService } from '@/server/services/blog.service';
+import { learningService } from '@/server/services/learning.service';
+import { certificateService } from '@/server/services/certificate.service';
+import { journeyService } from '@/server/services/journey.service';
+import { academicsService } from '@/server/services/academics.service';
+import { settingsService } from '@/server/services/settings.service';
+import { githubService } from '@/server/services/github.service';
+
+const [
+  allProjects,
+  blogsRes,
+  learningRes,
+  certificatesRes,
+  journeyRes,
+  academicsRes,
+  academicsSummaryRes,
+  settingsRes,
+  gitHubStats,
+] = await Promise.all([
+  projectService.getAll({ published: { $ne: false }, status: { $nin: ['Draft', 'Planned'] } }).catch(() => []),
+  blogService.getPaginated({ page: 1, limit: 10 }, { published: { $ne: false }, status: { $nin: ['draft', 'Draft', 'Planned', 'archived'] } }).catch(() => ({ data: [] })),
+  learningService.getAll({ published: { $ne: false }, status: { $nin: ['Draft', 'draft'] } }).catch(() => []),
+  certificateService.getAll({ published: { $ne: false }, isDeleted: false }).catch(() => []),
+  journeyService.getAll().catch(() => []),
+  academicsService.getAll({ published: { $ne: false }, status: { $nin: ['Draft', 'draft', 'Planned'] } }).catch(() => []),
+  academicsService.getSummary(false).catch(() => null),
+  settingsService.getSettings().catch(() => null),
+  githubService.getGitHubStats().catch(() => null),
+]);
+
+const siteSettings: any = settingsRes;
+const githubUrl =
+  (Array.isArray(siteSettings?.socialLinks)
+    ? siteSettings.socialLinks.find((s: any) => s.platform === 'github')?.url
+    : siteSettings?.socialLinks?.github) ||
+  siteSettings?.githubUrl ||
+  'https://github.com/ankit-gupta';
+
+const linkedinUrl =
+  (Array.isArray(siteSettings?.socialLinks)
+    ? siteSettings.socialLinks.find((s: any) => s.platform === 'linkedin')?.url
+    : siteSettings?.socialLinks?.linkedin) ||
+  siteSettings?.linkedinUrl ||
+  'https://linkedin.com/in/ankit-gupta';
+
+const twitterUrl =
+  (Array.isArray(siteSettings?.socialLinks)
+    ? siteSettings.socialLinks.find((s: any) => s.platform === 'twitter')?.url
+    : siteSettings?.socialLinks?.twitter) ||
+  siteSettings?.twitterUrl ||
+  'https://twitter.com/ankit_dev';
+
+const leetcodeUrl =
+  (Array.isArray(siteSettings?.socialLinks)
+    ? siteSettings.socialLinks.find((s: any) => s.platform === 'leetcode')?.url
+    : siteSettings?.socialLinks?.leetcode) ||
+  siteSettings?.leetcodeUrl ||
+  'https://leetcode.com/u/ankitgupta';
+
+const googleCloudUrl =
+  (Array.isArray(siteSettings?.socialLinks)
+    ? siteSettings.socialLinks.find((s: any) => s.platform === 'googlecloud' || s.platform === 'google_cloud' || s.platform === 'gcp')?.url
+    : siteSettings?.socialLinks?.googleCloud || siteSettings?.socialLinks?.gcp) ||
+  siteSettings?.googleCloudUrl ||
+  'https://www.cloudskillsboost.google/public_profiles/ankitgupta';
+
+const contactEmail = siteSettings?.contactEmail || 'ankitgupta72724@gmail.com';
+
+const heroSocialLinks = {
+  github: githubUrl,
+  linkedin: linkedinUrl,
+  leetcode: leetcodeUrl,
+  googleCloud: googleCloudUrl,
+  twitter: twitterUrl,
+  email: contactEmail,
+};
+
+const publishedProjects = (allProjects || []).filter(
+  (p: any) => p.published !== false && p.status !== 'Draft' && p.status !== 'Planned'
+);
+
+// Ensure featured projects are shown, falling back to all published projects so the section is always visible
+const featuredProjectsOnly = publishedProjects.filter((p: any) => p.featured === true);
+const displayFeaturedProjects = featuredProjectsOnly.length > 0 ? featuredProjectsOnly : publishedProjects;
+
+// Ensure articles are shown, falling back to published articles so the section is always visible
+const featuredArticlesOnly = (blogsRes.data || []).filter(
+  (b: any) => b.published !== false && b.featured === true && b.status !== 'draft' && b.status !== 'Draft' && b.status !== 'archived'
+);
+const latestArticles: any = (featuredArticlesOnly.length > 0
+  ? featuredArticlesOnly
+  : (blogsRes.data || []).filter((b: any) => b.published !== false && b.status !== 'draft' && b.status !== 'Draft' && b.status !== 'archived')
+).slice(0, 6);
+
+const publishedLearning: any[] = (learningRes || []).filter(
+  (l: any) => l.published !== false && l.status !== 'Draft' && l.status !== 'draft'
+);
+
+// Ensure learning tracks are shown, falling back to published learning tracks
+const featuredTracksOnly = publishedLearning.filter((l: any) => l.featured === true);
+const featuredLearningList = featuredTracksOnly.length > 0 ? featuredTracksOnly : publishedLearning;
+
+const certificatesList: any[] = (certificatesRes || []).slice(0, 3);
+
+const milestoneList: any = (journeyRes || [])
+  .sort((a: any, b: any) => (parseInt(a.year || a.period || '0', 10)) - (parseInt(b.year || b.period || '0', 10)));
+const semesterList: any = (academicsRes || [])
+  .filter((s: any) => s.published !== false && s.status !== 'Draft' && s.status !== 'draft')
+  .sort((a: any, b: any) => {
+    const numA = Number(a.semesterNumber) || (a.title?.match(/\d+/)?.[0] ? Number(a.title.match(/\d+/)?.[0]) : 0);
+    const numB = Number(b.semesterNumber) || (b.title?.match(/\d+/)?.[0] ? Number(b.title.match(/\d+/)?.[0]) : 0);
+    return numA - numB;
+  });
+const academicsSummary: any = academicsSummaryRes || null;
+
+const totalProjectsCount = publishedProjects.length;
+const totalBlogsCount = (blogsRes as any)?.meta?.totalItems ?? (blogsRes.data || []).length;
+const totalLearningCount = publishedLearning.length;
+const realCgpa = academicsSummary?.overallGpa ?? (
+  semesterList.length > 0
+    ? (semesterList.reduce((acc: number, s: any) => acc + (s.sgpa || 0), 0) / semesterList.length).toFixed(2)
+    : '8.9'
+);
+
+const heroStats = [
+  { label: 'Projects', value: totalProjectsCount > 0 ? `${totalProjectsCount}+` : '4+' },
+  { label: 'Blog Posts', value: totalBlogsCount > 0 ? `${totalBlogsCount}+` : '3+' },
+  { label: 'GitHub Commits', value: gitHubStats?.commits ? `${gitHubStats.commits}+` : '24+' },
+  { label: 'Technologies', value: '6' },
+  { label: 'CGPA', value: String(realCgpa || '9.1') },
+  { label: 'Years Learning', value: '4+' },
+];
+
+const authorName = siteSettings?.authorName || 'Ankit Gupta';
+const authorRole = siteSettings?.authorRole || 'Software Engineer • AI Developer • Builder';
+const authorBio = siteSettings?.authorBio || 'Building intelligent web applications and documenting my journey in tech, one project at a time.';
+const authorAvatar = '/images/ankit_avatar.png';
+const resumeUrl = siteSettings?.resumeUrl || '/assets/resume.pdf';
+const currentStatus = siteSettings?.currentStatus || siteSettings?.availabilityStatus || 'Available for opportunities';
+
+// Dynamically resolve active hero project from settings and DB projects
+let activeHeroProject = (allProjects || []).find((p: any) =>
+  (siteSettings?.currentProjectId && (p._id?.toString() === siteSettings.currentProjectId || p.id === siteSettings.currentProjectId)) ||
+  (siteSettings?.currentProjectSlug && p.slug === siteSettings.currentProjectSlug) ||
+  (siteSettings?.currentProject && (p.title === siteSettings.currentProject || p.slug === siteSettings.currentProject))
+);
+
+if (!activeHeroProject && allProjects && allProjects.length > 0) {
+  activeHeroProject = allProjects.find((p: any) => p.title?.toLowerCase().includes('autoops')) || allProjects[0];
+}
+
+const resolvedProjectName = siteSettings?.currentProject || activeHeroProject?.title || 'AutoOps AI';
+const resolvedProjectSlug = siteSettings?.currentProjectSlug || activeHeroProject?.slug || 'autoops-ai';
+
+// Find latest timeline milestone for this project
+let resolvedTimelineText = siteSettings?.currentProjectStatus;
+if (activeHeroProject?.timeline && Array.isArray(activeHeroProject.timeline) && activeHeroProject.timeline.length > 0) {
+  const latestMilestone = activeHeroProject.timeline[activeHeroProject.timeline.length - 1];
+  resolvedTimelineText = latestMilestone.title || latestMilestone.description || latestMilestone.status || resolvedTimelineText;
+}
+if (!resolvedTimelineText) {
+  resolvedTimelineText = activeHeroProject?.status || 'Sprint 3 Active';
+}
+
+const heroProfile = {
+  name: authorName,
+  title: authorRole,
+  bio: authorBio,
+  avatar: authorAvatar,
+  resumeUrl: resumeUrl,
+  status: currentStatus,
+  currentProject: resolvedProjectName,
+  currentProjectStatus: resolvedTimelineText,
+  currentProjectSlug: resolvedProjectSlug,
+};
+---
+
+<PublicLayout
+  title="Ankit Gupta | Lead Full-Stack & AI Systems Engineer"
+  description="Personal Operating System documenting engineering projects, learning progress, technical blogs, and academic growth."
+>
+  <!-- Hero Section -->
+  <HeroSection client:load stats={heroStats} socialLinks={heroSocialLinks} profile={heroProfile} />
+
+  <!-- Diagonal Under Development & WIP Callout (Immediately After Hero Section) -->
+  <section class="py-8 sm:py-10 border-y border-amber-500/30 bg-gradient-to-r from-amber-950/40 via-neutral-950 to-orange-950/40 relative overflow-hidden">
+    <!-- Diagonal background hazard stripe pattern -->
+    <div class="absolute inset-0 opacity-15 bg-[repeating-linear-gradient(45deg,#f59e0b_0,#f59e0b_2px,transparent_0,transparent_16px)] pointer-events-none"></div>
+
+    <div class="max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
+      <div class="max-w-4xl mx-auto transform -rotate-1 sm:-rotate-1.5 hover:rotate-0 transition-transform duration-300 rounded-2xl border border-amber-500/50 bg-gradient-to-r from-amber-950/90 via-neutral-900/95 to-orange-950/90 p-4 sm:p-6 shadow-[0_0_30px_rgba(245,158,11,0.2)] backdrop-blur-md">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 sm:gap-6 text-center sm:text-left">
+          <div class="flex flex-col sm:flex-row items-center sm:items-start gap-3.5">
+            <div class="p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 shrink-0">
+              <svg class="w-6 h-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500 text-black font-mono font-extrabold text-[10px] sm:text-xs tracking-wider uppercase shadow-sm">
+                  <span class="w-1.5 h-1.5 rounded-full bg-black animate-ping"></span>
+                  NOTICE • UNDER DEVELOPMENT
+                </span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
+                  Preview Draft
+                </span>
+              </div>
+              <h3 class="text-base sm:text-lg font-bold text-white tracking-tight">
+                Engineering Experiment • Live Refinement in Progress
+              </h3>
+              <p class="text-xs sm:text-sm text-neutral-300 leading-relaxed max-w-2xl">
+                This Portfolio Operating System is in active development. Several projects, statistics, and case studies are development drafts and <span class="text-amber-300 font-bold underline decoration-amber-500/60 underline-offset-2">do not represent real or final production data</span>. Real accomplishments and production logs are being added incrementally.
+              </p>
+            </div>
+          </div>
+          <div class="shrink-0 w-full sm:w-auto flex justify-center sm:justify-end">
+            <a
+              href={githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 hover:text-white border border-neutral-750 text-xs font-semibold transition-all hover:border-amber-500/40 shadow-sm active:scale-95"
+            >
+              <span>Follow on GitHub</span>
+              <svg class="w-4 h-4 text-neutral-400" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Project -->
+  <FeaturedProject client:visible projects={displayFeaturedProjects} />
+
+  <!-- Latest Articles -->
+  <LatestArticles client:visible articles={latestArticles} />
+
+  <!-- Learning Progress -->
+  <LearningSection client:visible tracks={publishedLearning} featuredTracks={featuredLearningList} authorAvatar={authorAvatar} streakDays={42} />
+
+  <!-- Journey Preview -->
+  <JourneyPreview client:visible milestones={milestoneList} />
+
+  <!-- Academic Progress -->
+  <AcademicSection client:visible summary={academicsSummary} semesters={semesterList} />
+
+  <!-- Open Source Activity -->
+  <OpenSourceSection client:visible stats={gitHubStats || undefined} />
+
+  <!-- Contact Call-To-Action -->
+  <ContactCTA client:visible />
+</PublicLayout>

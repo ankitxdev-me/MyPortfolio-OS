@@ -1,0 +1,36 @@
+---
+import PublicLayout from './PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  date: string;
+  readTime: string;
+  category?: string;
+}
+
+const { title, description, date, readTime, category = 'Engineering' } = Astro.props;
+---
+
+<PublicLayout title={title} description={description} type="article">
+  <SectionWrapper padding="lg">
+    <Container size="md" class="space-y-8">
+      <!-- Article Header Shell -->
+      <div class="space-y-4 border-b border-border/80 pb-8 text-center md:text-left">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase font-mono">
+          {category} • {readTime}
+        </div>
+        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground">{title}</h1>
+        <p class="text-muted-foreground text-lg">{description}</p>
+        <div class="text-xs font-mono text-muted-foreground">Published on {date}</div>
+      </div>
+
+      <!-- Article Content Body -->
+      <article class="prose prose-invert max-w-none prose-headings:text-foreground prose-a:text-primary">
+        <slot />
+      </article>
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

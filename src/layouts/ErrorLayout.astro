@@ -1,0 +1,34 @@
+---
+import PublicLayout from './PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+
+interface Props {
+  title?: string;
+  code?: string;
+  description?: string;
+}
+
+const {
+  title = 'System Notice',
+  code = '404',
+  description = 'The requested resource could not be located.',
+} = Astro.props;
+---
+
+<PublicLayout title={`${code} — ${title}`}>
+  <SectionWrapper padding="xl">
+    <Container size="sm" class="text-center space-y-6">
+      <div class="inline-block p-4 rounded-2xl bg-surface border border-border text-primary font-mono text-5xl md:text-7xl font-extrabold shadow-glow">
+        {code}
+      </div>
+      <div class="space-y-2">
+        <h1 class="text-2xl md:text-4xl font-bold text-foreground">{title}</h1>
+        <p class="text-muted-foreground text-sm md:text-base max-w-md mx-auto">{description}</p>
+      </div>
+      <div class="pt-4">
+        <slot />
+      </div>
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

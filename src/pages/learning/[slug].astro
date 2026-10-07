@@ -1,0 +1,46 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs.astro';
+import { CourseDetailView } from '@/components/learning/CourseDetailView';
+import { learningService } from '@/server/services/learning.service';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+let course: any = null;
+
+if (slug) {
+  try {
+    course = await learningService.getBySlugOrId(slug);
+  } catch (e) {
+    // Handled below
+  }
+}
+
+if (!course) {
+  return Astro.redirect('/learning');
+}
+
+// Fetch 3 related courses
+const allItems = await learningService.getAll({ published: { $ne: false }, status: { $nin: ['Draft', 'draft'] } }).catch(() => []);
+const relatedCourses = (allItems || [])
+  .filter((item: any) => (item.id !== course.id && item.slug !== course.slug))
+  .slice(0, 3);
+
+const pageTitle = `${course.title || course.name || 'Course'} | Continuous Learning`;
+const pageDescription = course.description || `Deep dive into ${course.title || course.name} coursework, learning roadmap, and syllabus modules.`;
+---
+
+<PublicLayout title={pageTitle} description={pageDescription}>
+  <SectionWrapper padding="lg">
+    <Container size="lg" class="space-y-8">
+      <!-- Breadcrumbs Path -->
+      <Breadcrumbs items={[{ label: 'Learning', href: '/learning' }, { label: course.title || course.name }]} />
+
+      <CourseDetailView client:load course={course} relatedCourses={relatedCourses} />
+    </Container>
+  </SectionWrapper>
+</PublicLayout>
+

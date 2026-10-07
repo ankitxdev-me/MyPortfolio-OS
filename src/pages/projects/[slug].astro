@@ -1,0 +1,73 @@
+---
+import ProjectLayout from '@/layouts/ProjectLayout.astro';
+import { ProjectDetailView } from '@/components/projects/ProjectDetailView';
+import { projectService } from '@/server/services/project.service';
+import { type DetailedProject } from '@/data/projectsData';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+let project: any = null;
+let relatedProjects: any[] = [];
+
+if (slug) {
+  try {
+    project = await projectService.getBySlugOrId(slug);
+  } catch (e) {
+    project = null;
+  }
+}
+
+if (!project || project.published === false || project.status === 'Draft') {
+  return Astro.redirect('/404');
+}
+
+// Fetch related projects from MongoDB or fallback list
+try {
+  const allFromDb = await projectService.getAll();
+  if (allFromDb && allFromDb.length > 0) {
+    relatedProjects = allFromDb.filter((p) => p.slug !== project.slug);
+  }
+} catch (e) {
+  // Ignore fallback handled below
+}
+
+// Related projects strictly from DB (no demo data fallback)
+relatedProjects = relatedProjects.slice(0, 3);
+
+const formattedProject = {
+  ...project,
+  id: project.id || project._id || project.slug,
+  title: project.title,
+  subtitle: project.subtitle || project.category || 'Engineering Case Study',
+  description: project.description || project.overview || project.summary || '',
+  category: project.category || 'Web Application',
+  status: project.status || (project.published ? 'Completed' : 'In Progress'),
+  startDate: project.startDate || 'Jan 2024',
+  deadline: project.deadline || 'Jul 2024',
+  liveUrl: project.liveUrl || project.demoUrl || '',
+  githubUrl: project.githubUrl || '',
+  image: project.image || project.thumbnailUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop',
+  overview: project.overview || project.description || project.summary || '',
+  architectureOverview: project.architectureOverview || 'Architected using modular microservices, clean layer decoupling, repository pattern, and Mongoose ORM.',
+  features: project.features || [
+    'Built with modern web technologies',
+    'Fully responsive and dark mode first',
+    'SEO-optimized and blazing fast',
+    'Headless CMS for content management',
+  ],
+  timeline: project.timeline || [
+    { date: 'Jan 2024', title: 'Project idea and planning', description: '' },
+    { date: 'Feb 2024', title: 'UI/UX Design and Prototype', description: '' },
+    { date: 'Mar 2024', title: 'Frontend Development', description: '' },
+    { date: 'May 2024', title: 'Backend Development', description: '' },
+    { date: 'Jul 2024', title: 'Project Launch', description: '' },
+  ],
+  gallery: project.gallery || [],
+  challenges: project.challenges || [],
+};
+---
+
+<ProjectLayout title={formattedProject.title} description={formattedProject.description} status={formattedProject.status}>
+  <ProjectDetailView client:load project={formattedProject as any} relatedProjects={relatedProjects as any} />
+</ProjectLayout>

@@ -1,0 +1,163 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import { Card } from '@/components/cards/Card';
+import { searchService } from '@/server/services/search.service';
+import { Search, Layers, BookOpen, GraduationCap, Compass, Building2, ArrowRight } from 'lucide-react';
+
+export const prerender = false;
+
+const query = Astro.url.searchParams.get('q') || '';
+const activeType = Astro.url.searchParams.get('type') || 'all';
+
+const searchRes = await searchService.globalSearch({
+  query,
+  type: activeType as any,
+  limit: 20,
+}).catch(() => ({ results: [], total: 0 }));
+
+const results = searchRes.results || [];
+const totalResults = searchRes.total || 0;
+
+const filterTabs = [
+  { id: 'all', label: 'All Content' },
+  { id: 'project', label: 'Projects' },
+  { id: 'blog', label: 'Articles' },
+  { id: 'learning', label: 'Learning' },
+  { id: 'journey', label: 'Journey' },
+  { id: 'academic', label: 'Academics' },
+  { id: 'freelance', label: 'Freelance' },
+];
+
+function getIcon(type: string) {
+  switch (type) {
+    case 'project':
+      return Layers;
+    case 'blog':
+      return BookOpen;
+    case 'learning':
+    case 'academic':
+      return GraduationCap;
+    case 'journey':
+      return Compass;
+    case 'freelance':
+      return Building2;
+    default:
+      return Search;
+  }
+}
+---
+
+<PublicLayout
+  title={query ? `Search Results for "${query}" | Portfolio OS` : 'Global Search | Portfolio OS'}
+  description="Search across projects, technical articles, active learning progress, career journey milestones, and academic transcripts."
+>
+  <SectionWrapper padding="lg">
+    <Container size="lg" class="space-y-12">
+      <!-- Search Header & Live Input -->
+      <div class="space-y-6 text-center max-w-3xl mx-auto">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase font-mono">
+          <Search className="w-4 h-4" /> Global Search Engine
+        </div>
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
+          Find <span class="orange-gradient-text">Anything</span> in Portfolio OS
+        </h1>
+
+        <!-- Form with URL sync -->
+        <form method="GET" action="/search" class="relative max-w-2xl mx-auto">
+          <Search className="w-5 h-5 text-muted-foreground absolute left-4 top-4" />
+          <input
+            type="text"
+            name="q"
+            value={query}
+            placeholder="Search projects, technical articles, skills, milestones..."
+            class="w-full pl-12 pr-28 py-3.5 rounded-xl bg-card border border-border text-foreground text-sm focus:border-primary focus:outline-none shadow-lg transition-colors"
+          />
+          {activeType !== 'all' && <input type="hidden" name="type" value={activeType} />}
+          <button
+            type="submit"
+            class="absolute right-2 top-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity"
+          >
+            Search
+          </button>
+        </form>
+      </div>
+
+      <!-- Type Filter Tabs -->
+      <div class="flex flex-wrap items-center justify-center gap-2 border-b border-border/80 pb-4">
+        {filterTabs.map((tab) => {
+          const isActive = activeType === tab.id;
+          const href = `/search?q=${encodeURIComponent(query)}${tab.id !== 'all' ? `&type=${tab.id}` : ''}`;
+          return (
+            <a
+              href={href}
+              class={`px-4 py-2 rounded-lg text-xs font-mono font-semibold transition-colors ${
+                isActive
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'bg-surface hover:bg-surface-hover text-muted-foreground hover:text-foreground border border-border/60'
+              }`}
+            >
+              {tab.label}
+            </a>
+          );
+        })}
+      </div>
+
+      <!-- Result Count & Query Summary -->
+      <div class="flex items-center justify-between text-xs font-mono text-muted-foreground">
+        <span>
+          {query ? `Showing ${totalResults} result${totalResults === 1 ? '' : 's'} for "${query}"` : `Showing all indexed items (${totalResults})`}
+        </span>
+        {activeType !== 'all' && <span class="capitalize text-primary font-bold">Filter: {activeType}</span>}
+      </div>
+
+      <!-- Search Results Grid -->
+      {results.length > 0 ? (
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {results.map((item) => {
+            const IconComp = getIcon(item.type);
+            return (
+              <a href={item.url} class="block group">
+                <Card variant="interactive" padding="md" className="space-y-3 h-full flex flex-col justify-between">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs text-muted-foreground">
+                      <span class="inline-flex items-center gap-1.5 font-mono text-primary uppercase font-bold text-[10px]">
+                        <IconComp className="w-3.5 h-3.5" /> {item.type}
+                      </span>
+                      {item.category && (
+                        <span class="px-2 py-0.5 rounded bg-surface border border-border text-[10px] text-muted-foreground">
+                          {item.category}
+                        </span>
+                      )}
+                    </div>
+                    <h3 class="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                      {item.title}
+                    </h3>
+                    <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{item.description}</p>
+                  </div>
+
+                  <div class="pt-3 border-t border-border/50 flex items-center justify-between text-xs font-mono text-muted-foreground">
+                    <span class="text-[10px] text-muted-foreground">Relevance Score: {item.score}</span>
+                    <span class="text-primary font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      View Page <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </Card>
+              </a>
+            );
+          })}
+        </div>
+      ) : (
+        <div class="p-12 text-center rounded-2xl glass-card border border-border space-y-3 max-w-md mx-auto">
+          <Search className="w-8 h-8 text-muted-foreground mx-auto" />
+          <h3 class="font-bold text-foreground text-base">No Matching Results Found</h3>
+          <p class="text-xs text-muted-foreground">Try broadening your search query or switching to "All Content".</p>
+          <a href="/search" class="inline-block mt-2 px-4 py-2 rounded-lg bg-surface border border-border text-xs text-foreground font-mono hover:border-primary">
+            Clear Search Filter
+          </a>
+        </div>
+      )}
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

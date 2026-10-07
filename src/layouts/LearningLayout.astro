@@ -1,0 +1,23 @@
+---
+import PublicLayout from './PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Learning Track',
+  description = 'Documenting technical learning, skills acquired, and practical milestones.',
+} = Astro.props;
+---
+
+<PublicLayout title={`${title} | Portfolio OS`} description={description}>
+  <SectionWrapper padding="lg">
+    <Container size="lg" class="space-y-8">
+      <slot />
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

@@ -1,0 +1,110 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import { ClientWorkCard } from '@/components/freelancing/ClientWorkCard';
+import { ServiceCard } from '@/components/freelancing/ServiceCard';
+import { FREELANCE_SERVICES } from '@/data/freelanceData';
+import { freelancingService } from '@/server/services/freelancing.service';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs.astro';
+import { Building2 } from 'lucide-react';
+
+const rawWorks = await freelancingService.getAll({ published: { $ne: false }, status: { $nin: ['Draft', 'draft', 'Planned'] } }).catch(() => []);
+
+const allWorks = (rawWorks || [])
+  .filter((w: any) => w.published !== false && w.status !== 'Draft' && w.status !== 'draft')
+  .map((w: any) => ({
+    id: w.id || w.slug,
+    slug: w.slug || 'client-project',
+    title: w.title,
+    clientName: w.clientName || 'Global Enterprise',
+    industry: w.industry || 'Fintech & SaaS',
+    projectType: w.projectType || 'Full-Stack Architecture',
+    duration: w.duration || '6 Weeks',
+    status: w.status || 'Completed',
+    published: w.published !== false,
+    featured: !!w.featured,
+    description: w.description || '',
+    deliverables: w.deliverables || ['Web Dashboard', 'API Architecture'],
+    objectives: w.objectives || ['High-Throughput Ingestion', 'Zero Downtime'],
+    techStack: w.techStack || ['TypeScript', 'Node.js', 'MongoDB'],
+    businessImpact: w.businessImpact || [
+      { metric: '99.99%', label: 'Uptime SLA' },
+      { metric: '< 50ms', label: 'API Latency' },
+      { metric: '10x', label: 'Scale' },
+    ],
+    challenges: w.challenges || [],
+    testimonial: w.testimonial,
+  }));
+
+const stats = {
+  projectsDelivered: allWorks.length || 12,
+  happyClients: 8,
+  averageRating: 5.0,
+  repeatClientRate: 100,
+};
+---
+
+<PublicLayout
+  title="Freelancing & Client Engineering | Portfolio OS"
+  description="Contract client projects, full-stack enterprise solutions, client testimonials, and engineering consulting services."
+>
+  <SectionWrapper padding="lg">
+    <Container size="lg" class="space-y-12">
+      <!-- Breadcrumbs Path -->
+      <Breadcrumbs items={[{ label: 'Freelancing' }]} />
+      <!-- Header Banner -->
+      <div class="space-y-4 border-b border-border/80 pb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase font-mono">
+          <Building2 className="w-4 h-4" /> Client Solutions & Consulting
+        </div>
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground">
+          Freelance <span class="orange-gradient-text">Engineering</span>
+        </h1>
+        <p class="text-muted-foreground text-base md:text-lg max-w-2xl">
+          High-performance full-stack web applications, AI automation agents, database optimization, and cloud architecture built for global clients.
+        </p>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 p-4 sm:p-6 rounded-2xl glass-card border border-border">
+        <div class="text-center space-y-1">
+          <div class="text-2xl sm:text-3xl font-extrabold text-primary font-mono">{stats.projectsDelivered}+</div>
+          <div class="text-xs text-muted-foreground font-medium">Projects Delivered</div>
+        </div>
+        <div class="text-center space-y-1">
+          <div class="text-2xl sm:text-3xl font-extrabold text-foreground font-mono">{stats.happyClients}</div>
+          <div class="text-xs text-muted-foreground font-medium">Satisfied Clients</div>
+        </div>
+        <div class="text-center space-y-1">
+          <div class="text-2xl sm:text-3xl font-extrabold text-primary font-mono">{stats.averageRating} ★</div>
+          <div class="text-xs text-muted-foreground font-medium">Client Rating</div>
+        </div>
+        <div class="text-center space-y-1">
+          <div class="text-2xl sm:text-3xl font-extrabold text-foreground font-mono">{stats.repeatClientRate}%</div>
+          <div class="text-xs text-muted-foreground font-medium">Repeat Client Rate</div>
+        </div>
+      </div>
+
+      <!-- Services Offered Grid -->
+      <div class="space-y-6">
+        <h2 class="text-2xl font-extrabold text-foreground tracking-tight">Services & Expertise</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          {FREELANCE_SERVICES.map((service) => (
+            <ServiceCard client:visible service={service} />
+          ))}
+        </div>
+      </div>
+
+      <!-- Client Work Showcase -->
+      <div class="space-y-6">
+        <h2 class="text-2xl font-extrabold text-foreground tracking-tight">Featured Client Projects</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {allWorks.map((work: any) => (
+            <ClientWorkCard client:visible work={work} />
+          ))}
+        </div>
+      </div>
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

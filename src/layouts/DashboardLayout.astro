@@ -1,0 +1,59 @@
+---
+import SEO from '@/components/seo/SEO.astro';
+import SkipToContent from '@/components/shell/SkipToContent.astro';
+import { ToastContainer } from '@/components/ui/ToastContainer';
+import { LoadingIndicator } from '@/components/shell/LoadingIndicator';
+import { DashboardAuthShell } from '@/components/dashboard/DashboardAuthShell';
+import { authenticateRequest } from '@/server/middleware/auth.middleware';
+import { PermissionManager, type UserRole } from '@/server/auth/permissions';
+import '@/styles/globals.css';
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'Overview' } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+// Server-side authentication guard
+const user = await authenticateRequest(Astro.request);
+
+if (!user) {
+  return Astro.redirect(`/login?redirect=${encodeURIComponent(currentPath)}`, 302);
+}
+
+// Resolve permissions server-side so they can be pre-hydrated on the client
+const permissions = PermissionManager.getPermissionsForRole(user.role as UserRole);
+---
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <SEO title={`${title} | Portfolio OS CMS`} />
+  </head>
+  <body class="bg-background text-foreground antialiased min-h-screen flex overflow-x-hidden selection:bg-primary/25 selection:text-primary">
+    <SkipToContent />
+
+    <!-- Route Transition Progress Line -->
+    <LoadingIndicator client:load />
+
+    <!--
+      DashboardAuthShell wraps all client-side React islands in AuthProvider,
+      pre-hydrating auth state from the server to eliminate loading flashes.
+    -->
+    <DashboardAuthShell
+      client:load
+      initialUser={user}
+      initialPermissions={permissions.map(String)}
+      currentPath={currentPath}
+      title={title}
+    >
+      <slot />
+    </DashboardAuthShell>
+
+    <!-- Floating Toast Popups -->
+    <ToastContainer client:load />
+  </body>
+</html>

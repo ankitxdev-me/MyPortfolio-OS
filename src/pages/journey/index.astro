@@ -1,0 +1,36 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import { JourneyTimeline } from '@/components/journey/JourneyTimeline';
+import { journeyService } from '@/server/services/journey.service';
+
+const rawMilestones = await journeyService.getAll().catch(() => []);
+
+const allMilestones = (rawMilestones || []).map((m: any) => ({
+  slug: m.slug || 'milestone',
+  title: m.title || 'Engineering Milestone',
+  subtitle: m.subtitle || `${m.organization || 'Independent'} — ${m.role || 'Engineer'}`,
+  date: m.period || m.year || '2026',
+  year: m.period || m.year || '2026',
+  period: m.period || m.year || '2026',
+  category: m.category || (m.type === 'education' ? 'Academics' : 'Career'),
+  type: m.type || 'major',
+  status: m.status || 'Completed',
+  tags: m.tags && m.tags.length > 0 ? m.tags : ['Engineering', 'Architecture'],
+  description: m.description || m.summary || '',
+  summary: m.description || m.summary || '',
+  iconName: m.iconName || 'Compass',
+}));
+---
+
+<PublicLayout
+  title="Milestones & History | Engineering Journey"
+  description="A timeline of my growth, learning, and impact — built one step at a time."
+>
+  <SectionWrapper padding="lg" class="bg-neutral-950/95 text-white min-h-screen">
+    <Container size="lg" class="py-4">
+      <JourneyTimeline client:load initialMilestones={allMilestones} />
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

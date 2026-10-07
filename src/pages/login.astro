@@ -1,0 +1,153 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import { Card } from '@/components/cards/Card';
+import { Button } from '@/components/ui/Button';
+import { Lock, Mail, ShieldCheck, AlertCircle, Clock } from 'lucide-react';
+
+// Read query params server-side
+const isExpired = Astro.url.searchParams.get('expired') === '1';
+const redirectTarget = Astro.url.searchParams.get('redirect') || '/dashboard';
+---
+
+<PublicLayout title="Admin Login — Portfolio OS">
+  <SectionWrapper padding="xl" class="min-h-[80vh] flex items-center justify-center">
+    <Container size="sm" class="max-w-md mx-auto">
+      <Card variant="glass" padding="lg" className="space-y-6 border-primary/20 shadow-glow">
+        <!-- Header -->
+        <div class="text-center space-y-2">
+          <div class="inline-flex p-3 rounded-2xl bg-primary/10 border border-primary/20 text-primary mb-2">
+            <ShieldCheck className="w-8 h-8" />
+          </div>
+          <h1 class="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
+            Portfolio OS <span class="orange-gradient-text">CMS Admin</span>
+          </h1>
+          <p class="text-xs text-muted-foreground">Sign in with administrator credentials to manage portfolio content.</p>
+        </div>
+
+        <!-- Expired Session Banner (server-rendered) -->
+        {isExpired && (
+          <div class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs flex items-center gap-2">
+            <Clock className="w-4 h-4 shrink-0" />
+            <span>Your session has expired. Please sign in again to continue.</span>
+          </div>
+        )}
+
+        <!-- Error Alert Container (client-side) -->
+        <div id="login-error-alert" class="hidden p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span id="login-error-message">Invalid email or password credentials</span>
+        </div>
+
+        <!-- Login Form -->
+        <form id="admin-login-form" class="space-y-4">
+          <div class="space-y-1.5">
+            <label for="email" class="text-xs font-mono text-muted-foreground uppercase flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-primary" /> Admin Email Address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              placeholder="admin@portfolio.os"
+              autocomplete="email"
+              class="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-xs font-mono focus:border-primary focus:outline-none transition-colors"
+            />
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="password" class="text-xs font-mono text-muted-foreground uppercase flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-primary" /> Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              placeholder="••••••••••••"
+              autocomplete="current-password"
+              class="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-xs font-mono focus:border-primary focus:outline-none transition-colors"
+            />
+          </div>
+
+          <div class="flex items-center justify-between text-xs pt-1">
+            <label class="flex items-center gap-2 cursor-pointer select-none text-muted-foreground hover:text-foreground">
+              <input id="rememberMe" name="rememberMe" type="checkbox" checked class="rounded bg-background border-border text-primary focus:ring-primary" />
+              <span>Remember me for 30 days</span>
+            </label>
+            <span class="text-[11px] font-mono text-primary/70">Role: Admin</span>
+          </div>
+
+          <div class="pt-2">
+            <Button id="login-submit-btn" type="submit" variant="primary" size="lg" className="w-full font-bold">
+              Sign In to CMS Dashboard
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </Container>
+  </SectionWrapper>
+</PublicLayout>
+
+<script is:inline define:vars={{ redirectTarget }}>
+  const form = document.getElementById('admin-login-form');
+  const errorAlert = document.getElementById('login-error-alert');
+  const errorMessage = document.getElementById('login-error-message');
+  const submitBtn = document.getElementById('login-submit-btn');
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Reset error state
+      if (errorAlert) errorAlert.classList.add('hidden');
+
+      // Loading state
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Authenticating...';
+      }
+
+      const email = document.getElementById('email')?.value?.trim() ?? '';
+      const password = document.getElementById('password')?.value?.trim() ?? '';
+      const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+
+      try {
+        const response = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ email, password, rememberMe }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success && data.data?.token) {
+          // Set client-side cookie as fail-safe alongside HTTP-only server cookie
+          const maxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 7;
+          document.cookie = `portfolio_os_session=${data.data.token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+
+          // Redirect to intended destination (or dashboard)
+          const destination = redirectTarget || '/dashboard';
+          window.location.href = destination;
+        } else {
+          // Show error message from server
+          const detailMsg = data.error?.details?.[0]?.message;
+          const msg = detailMsg || data.error?.message || 'Invalid email or password credentials';
+          if (errorMessage) errorMessage.innerText = msg;
+          if (errorAlert) errorAlert.classList.remove('hidden');
+        }
+      } catch {
+        if (errorMessage) errorMessage.innerText = 'Network error. Failed to reach authentication server.';
+        if (errorAlert) errorAlert.classList.remove('hidden');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Sign In to CMS Dashboard';
+        }
+      }
+    });
+  }
+</script>

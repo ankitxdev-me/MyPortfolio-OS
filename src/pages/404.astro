@@ -1,0 +1,49 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import { Card } from '@/components/cards/Card';
+import { Button } from '@/components/ui/Button';
+---
+
+<PublicLayout title="404 — Page Not Found | Portfolio OS" description="The requested portfolio resource could not be found.">
+  <SectionWrapper padding="lg">
+    <Container size="md" class="py-16 text-center space-y-8">
+      <div class="space-y-4 max-w-lg mx-auto">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold uppercase font-mono">
+          404 HTTP Error
+        </div>
+        <h1 class="text-6xl md:text-8xl font-black text-foreground font-mono">404</h1>
+        <h2 class="text-2xl font-bold text-foreground">Page Not Found</h2>
+        <p class="text-sm text-muted-foreground leading-relaxed">
+          The portfolio page or case study resource you requested does not exist or may have been relocated.
+        </p>
+      </div>
+
+      <Card variant="glass" padding="md" className="max-w-md mx-auto space-y-4">
+        <form method="GET" action="/search" class="flex items-center gap-2">
+          <input
+            type="text"
+            name="q"
+            placeholder="Search projects, blogs, skills..."
+            class="w-full px-3.5 py-2 rounded-lg bg-background border border-border text-foreground text-xs focus:border-primary focus:outline-none font-mono"
+          />
+          <Button type="submit" variant="primary" size="sm">
+            Search
+          </Button>
+        </form>
+
+        <div class="flex items-center justify-center gap-3 pt-2">
+          <a href="/">
+            <Button variant="outline" size="sm">
+              Back to Home
+            </Button>
+          </a>
+          <button onclick="history.back()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground font-mono">
+            Previous Page
+          </button>
+        </div>
+      </Card>
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

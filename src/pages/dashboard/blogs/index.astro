@@ -1,0 +1,8 @@
+---
+import DashboardLayout from '@/layouts/DashboardLayout.astro';
+import { BlogsDashboard } from '@/components/dashboard/BlogsDashboard';
+---
+
+<DashboardLayout title="Blogs CMS">
+  <BlogsDashboard client:load />
+</DashboardLayout>

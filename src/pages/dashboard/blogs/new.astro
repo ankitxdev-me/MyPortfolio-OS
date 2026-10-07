@@ -1,0 +1,8 @@
+---
+import DashboardLayout from '@/layouts/DashboardLayout.astro';
+import { BlogForm } from '@/components/dashboard/BlogForm';
+---
+
+<DashboardLayout title="Technical Article Editor">
+  <BlogForm client:load />
+</DashboardLayout>

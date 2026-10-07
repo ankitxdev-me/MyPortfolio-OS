@@ -1,0 +1,80 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs.astro';
+import { MilestoneDetailHero } from '@/components/journey/MilestoneDetailHero';
+import { journeyService } from '@/server/services/journey.service';
+import { CheckCircle2 } from 'lucide-react';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+let milestone: any = null;
+
+if (slug) {
+  try {
+    const res = await journeyService.getBySlugOrId(slug);
+    if (res) {
+      milestone = res;
+    }
+  } catch (e) {
+    // Handled below
+  }
+}
+
+if (!milestone) {
+  return Astro.redirect('/journey');
+}
+
+const formattedMilestone = {
+  title: milestone.title,
+  subtitle: `${milestone.organization || 'Independent'} — ${milestone.role || 'Software Engineer'}`,
+  summary: milestone.description || '',
+  story: milestone.description || 'Full milestone post-mortem documenting architectural changes and project releases.',
+  date: milestone.period || '2026',
+  type: milestone.type || 'experience',
+  tags: ['Engineering', 'Architecture'],
+  lessonsLearned: [
+    'Modular architectural boundaries protect production code stability.',
+    'Systematic test coverage guarantees error-free release velocity.',
+  ],
+};
+---
+
+<PublicLayout title={`${formattedMilestone.title} | Engineering Journey`} description={formattedMilestone.summary}>
+  <SectionWrapper padding="lg">
+    <Container size="md" class="space-y-8">
+      <!-- Breadcrumbs Path -->
+      <Breadcrumbs items={[{ label: 'Journey', href: '/journey' }, { label: formattedMilestone.title }]} />
+
+      <!-- Milestone Detail Hero -->
+      <MilestoneDetailHero client:load milestone={formattedMilestone as any} />
+
+      <!-- Story & Overview -->
+      {formattedMilestone.story && (
+        <div class="p-6 rounded-2xl glass-card border border-border space-y-4">
+          <h3 class="font-bold text-foreground text-lg">Detailed Milestone Summary</h3>
+          <p class="text-sm text-muted-foreground leading-relaxed">{formattedMilestone.story}</p>
+        </div>
+      )}
+
+      <!-- Key Engineering Lessons -->
+      {formattedMilestone.lessonsLearned && formattedMilestone.lessonsLearned.length > 0 && (
+        <div class="p-6 rounded-2xl glass-card border border-border space-y-4">
+          <h3 class="font-bold text-foreground text-lg flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-primary" /> Engineering Lessons & Takeaways
+          </h3>
+          <ul class="space-y-3 text-sm">
+            {formattedMilestone.lessonsLearned.map((lesson: string) => (
+              <li class="flex items-start gap-2.5 text-muted-foreground">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0"></span>
+                <span>{lesson}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

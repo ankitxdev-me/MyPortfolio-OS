@@ -1,0 +1,31 @@
+---
+import PublicLayout from './PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  status?: string;
+}
+
+const { title, description, status = 'In Progress' } = Astro.props;
+---
+
+<PublicLayout title={`${title} | Projects`} description={description}>
+  <SectionWrapper padding="lg">
+    <Container size="lg" class="space-y-12">
+      <!-- Project Detail Header Shell -->
+      <div class="space-y-4 border-b border-border/80 pb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase font-mono">
+          Project Showcase • {status}
+        </div>
+        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground">{title}</h1>
+        <p class="text-muted-foreground text-lg max-w-3xl">{description}</p>
+      </div>
+
+      <!-- Project Content Slot -->
+      <slot />
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

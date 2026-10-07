@@ -1,0 +1,8 @@
+---
+import DashboardLayout from '@/layouts/DashboardLayout.astro';
+import { SettingsDashboard } from '@/components/dashboard/SettingsDashboard';
+---
+
+<DashboardLayout title="Site Settings">
+  <SettingsDashboard client:load />
+</DashboardLayout>

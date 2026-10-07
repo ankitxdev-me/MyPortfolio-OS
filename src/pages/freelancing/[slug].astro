@@ -1,0 +1,117 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import { ClientDetailHero } from '@/components/freelancing/ClientDetailHero';
+import { freelancingService } from '@/server/services/freelancing.service';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs.astro';
+import { CheckCircle2, Star, TrendingUp } from 'lucide-react';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+let work: any = null;
+
+if (slug) {
+  try {
+    const res = await freelancingService.getBySlugOrId(slug);
+    if (res && res.published !== false && res.status !== 'Draft' && res.status !== 'draft') {
+      work = res;
+    }
+  } catch (e) {
+    // Handled below
+  }
+}
+
+if (!work) {
+  return Astro.redirect('/404');
+}
+
+const formattedWork = {
+  title: work.title,
+  clientName: work.clientName || 'Global Client',
+  industry: work.industry || 'Fintech',
+  projectType: work.projectType || 'Full-Stack Integration',
+  duration: work.duration || '4 Weeks',
+  status: work.status || 'Completed',
+  description: work.description || 'Full engineering case study detailing cloud architecture and database optimizations.',
+  techStack: work.techStack && work.techStack.length > 0 ? work.techStack : ['TypeScript', 'Node.js', 'MongoDB Atlas', 'Docker'],
+  deliverables: work.deliverables && work.deliverables.length > 0 ? work.deliverables : ['Web Application Dashboard', 'API Architecture', 'Database Sharding'],
+  businessImpact: work.businessImpact && work.businessImpact.length > 0 ? work.businessImpact : [
+    { metric: '99.99%', label: 'Uptime SLA' },
+    { metric: '< 50ms', label: 'API P99 Latency' },
+    { metric: '10x', label: 'Scale Factor' },
+  ],
+  testimonial: work.testimonial || {
+    feedback: 'Ankit delivered an exceptional high-performance solution ahead of schedule with immaculate technical documentation.',
+    clientName: work.clientName || 'Engineering Director',
+    role: 'VP of Engineering',
+    company: work.clientName || 'Global Enterprise',
+    rating: 5,
+  },
+};
+---
+
+<PublicLayout title={`${formattedWork.title} Case Study | Freelance Engineering`} description={formattedWork.description}>
+  <SectionWrapper padding="lg">
+    <Container size="md" class="space-y-8">
+      <!-- Breadcrumbs Path -->
+      <Breadcrumbs items={[{ label: 'Freelancing', href: '/freelancing' }, { label: formattedWork.title }]} />
+
+      <!-- Client Detail Hero Header -->
+      <ClientDetailHero client:load work={formattedWork as any} />
+
+      <!-- Business Impact Metrics -->
+      {formattedWork.businessImpact && formattedWork.businessImpact.length > 0 && (
+        <div class="p-6 rounded-2xl glass-card border border-border space-y-4">
+          <h3 class="font-bold text-foreground text-lg flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" /> Measured Business Impact
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {formattedWork.businessImpact.map((metric: any) => (
+              <div class="p-4 rounded-xl bg-background/50 border border-border/40 space-y-1">
+                <div class="text-2xl font-extrabold text-primary font-mono">{metric.metric}</div>
+                <div class="text-xs text-muted-foreground font-medium">{metric.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- Key Deliverables & Tech Capabilities -->
+      {formattedWork.deliverables && formattedWork.deliverables.length > 0 && (
+        <div class="p-6 rounded-2xl glass-card border border-border space-y-4">
+          <h3 class="font-bold text-foreground text-lg flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-primary" /> Engineering Deliverables
+          </h3>
+          <ul class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            {formattedWork.deliverables.map((item: string) => (
+              <li class="flex items-start gap-2.5 text-muted-foreground">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0"></span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <!-- Testimonial Quote -->
+      {formattedWork.testimonial && (
+        <div class="p-8 rounded-2xl glass-card border border-primary/30 space-y-4 bg-primary/5">
+          <div class="flex items-center gap-1 text-primary">
+            {Array.from({ length: formattedWork.testimonial.rating }).map((_, i) => (
+              <Star key={i} className="w-4 h-4 fill-current" />
+            ))}
+          </div>
+          <p class="text-foreground text-base md:text-lg font-medium italic leading-relaxed">
+            "{formattedWork.testimonial.feedback}"
+          </p>
+          <div class="pt-2 border-t border-border/40 flex items-center justify-between text-xs font-mono">
+            <span class="font-bold text-foreground">{formattedWork.testimonial.clientName}</span>
+            <span class="text-muted-foreground">{formattedWork.testimonial.role}, {formattedWork.testimonial.company}</span>
+          </div>
+        </div>
+      )}
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

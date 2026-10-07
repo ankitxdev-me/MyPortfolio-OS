@@ -1,0 +1,37 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import { Card } from '@/components/cards/Card';
+import { Button } from '@/components/ui/Button';
+---
+
+<PublicLayout title="500 — Server Exception | Portfolio OS" description="Internal server error occurred during request processing.">
+  <SectionWrapper padding="lg">
+    <Container size="md" class="py-16 text-center space-y-8">
+      <div class="space-y-4 max-w-lg mx-auto">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold uppercase font-mono">
+          500 Internal Exception
+        </div>
+        <h1 class="text-6xl md:text-8xl font-black text-foreground font-mono">500</h1>
+        <h2 class="text-2xl font-bold text-foreground">Server Exception Occurred</h2>
+        <p class="text-sm text-muted-foreground leading-relaxed">
+          An unhandled error occurred while fulfilling your request. The error has been logged automatically to system diagnostics.
+        </p>
+      </div>
+
+      <Card variant="glass" padding="md" className="max-w-md mx-auto space-y-4">
+        <div class="flex items-center justify-center gap-3">
+          <button onclick="window.location.reload()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:opacity-90">
+            Reload Page
+          </button>
+          <a href="/">
+            <Button variant="outline" size="sm">
+              Back to Home
+            </Button>
+          </a>
+        </div>
+      </Card>
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

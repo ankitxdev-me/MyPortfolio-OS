@@ -1,0 +1,166 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import { AuthorCard } from '@/components/blog/AuthorCard';
+import { blogService } from '@/server/services/blog.service';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs.astro';
+import { Clock, Calendar, Tag } from 'lucide-react';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+let article: any = null;
+
+if (slug) {
+  try {
+    const res: any = await blogService.getBySlugOrId(slug);
+    if (
+      res &&
+      res.status !== 'draft' &&
+      res.status !== 'Draft' &&
+      res.status !== 'archived' &&
+      res.isDeleted !== true
+    ) {
+      article = res;
+    }
+  } catch (e) {
+    article = null;
+  }
+}
+
+if (!article) {
+  return Astro.redirect('/404');
+}
+
+let bodyContent = article.content || article.excerpt || '';
+if (typeof bodyContent === 'string' && (bodyContent.trim().startsWith('{') || bodyContent.trim().startsWith('['))) {
+  try {
+    const parsed = JSON.parse(bodyContent);
+    if (parsed && typeof parsed === 'object') {
+      const parts = [
+        parsed.introduction,
+        ...(parsed.sections || []).map((s: any) => {
+          const title = s.title ? `### ${s.title}` : '';
+          const paras = Array.isArray(s.paragraphs) ? s.paragraphs.join('\n\n') : '';
+          const callout = s.callout ? `> **${s.callout.title || 'Note'}**: ${s.callout.message}` : '';
+          const code = s.codeBlock ? `\`\`\`${s.codeBlock.language || ''}\n${s.codeBlock.code}\n\`\`\`` : '';
+          return [title, paras, callout, code].filter(Boolean).join('\n\n');
+        }),
+        parsed.conclusion,
+      ].filter(Boolean);
+      bodyContent = parts.join('\n\n');
+    }
+  } catch (e) {
+    // Keep raw
+  }
+} else if (typeof bodyContent === 'object' && bodyContent !== null) {
+  const parts = [
+    bodyContent.introduction,
+    ...(bodyContent.sections || []).map((s: any) => {
+      const title = s.title ? `### ${s.title}` : '';
+      const paras = Array.isArray(s.paragraphs) ? s.paragraphs.join('\n\n') : '';
+      const callout = s.callout ? `> **${s.callout.title || 'Note'}**: ${s.callout.message}` : '';
+      const code = s.codeBlock ? `\`\`\`${s.codeBlock.language || ''}\n${s.codeBlock.code}\n\`\`\`` : '';
+      return [title, paras, callout, code].filter(Boolean).join('\n\n');
+    }),
+    bodyContent.conclusion,
+  ].filter(Boolean);
+  bodyContent = parts.join('\n\n');
+}
+
+const formattedArticle = {
+  title: article.title,
+  subtitle: article.subtitle || article.excerpt,
+  excerpt: article.excerpt,
+  content: bodyContent,
+  category: article.category || 'Engineering',
+  date:
+    article.date ||
+    article.publishedAt ||
+    (article.createdAt
+      ? new Date(article.createdAt).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      : 'Recent'),
+  readTime: article.readTime || `${article.readingTimeMinutes || 5} min read`,
+  coverImage:
+    article.coverImage ||
+    article.coverImageUrl ||
+    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop',
+  tags: Array.isArray(article.tags) ? article.tags : ['Engineering'],
+  author: article.author || {
+    name: 'Ankit Gupta',
+    role: 'Lead Full-Stack & AI Systems Engineer',
+    bio: 'Architecting scalable backend infrastructure and autonomous AI agent platforms.',
+    avatarUrl: '/images/ankit_hero_avatar.jpg',
+  },
+};
+---
+
+<PublicLayout title={formattedArticle.title} description={formattedArticle.excerpt}>
+  <SectionWrapper padding="lg">
+    <Container size="md" class="space-y-8">
+      <!-- Breadcrumbs Path -->
+      <Breadcrumbs items={[{ label: 'Blog', href: '/blog' }, { label: formattedArticle.title }]} />
+
+      <!-- Article Header -->
+      <div class="space-y-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase font-mono">
+          {formattedArticle.category}
+        </div>
+        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
+          {formattedArticle.title}
+        </h1>
+        {formattedArticle.subtitle && (
+          <p class="text-muted-foreground text-lg md:text-xl font-medium">
+            {formattedArticle.subtitle}
+          </p>
+        )}
+        <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-muted-foreground pt-2 border-b border-border/80 pb-6">
+          <span class="inline-flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {formattedArticle.date}</span>
+          <span>•</span>
+          <span class="inline-flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {formattedArticle.readTime}</span>
+        </div>
+      </div>
+
+      <!-- Featured Image -->
+      <div class="rounded-2xl overflow-hidden border border-border aspect-video">
+        <img src={formattedArticle.coverImage} alt={formattedArticle.title} class="w-full h-full object-cover" />
+      </div>
+
+      <!-- Main Layout Split -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <!-- Main Article Content -->
+        <article class="lg:col-span-8 prose dark:prose-invert max-w-none text-foreground space-y-6 leading-relaxed">
+          <p class="text-lg font-medium text-muted-foreground leading-relaxed border-l-4 border-primary pl-4 py-1 italic">
+            {formattedArticle.excerpt}
+          </p>
+
+          <div class="space-y-4 font-sans leading-relaxed text-sm md:text-base whitespace-pre-wrap">
+            {formattedArticle.content}
+          </div>
+
+          <!-- Article Tags -->
+          {formattedArticle.tags && formattedArticle.tags.length > 0 && (
+            <div class="pt-8 border-t border-border/80 flex items-center gap-2 flex-wrap">
+              <Tag className="w-4 h-4 text-primary" />
+              {formattedArticle.tags.map((tag: string) => (
+                <span class="px-2.5 py-1 rounded-md bg-surface border border-border text-foreground text-xs font-mono">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </article>
+
+        <!-- Sidebar Components -->
+        <aside class="lg:col-span-4 space-y-6">
+          <AuthorCard client:visible {...formattedArticle.author} />
+        </aside>
+      </div>
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

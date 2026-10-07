@@ -1,0 +1,139 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro';
+import Container from '@/components/foundation/Container.astro';
+import SectionWrapper from '@/components/foundation/SectionWrapper.astro';
+import { ResumeHeader } from '@/components/contact/ResumeHeader';
+import { ResumeExperience } from '@/components/contact/ResumeExperience';
+import { Card } from '@/components/cards/Card';
+import { RESUME_SUMMARY, SKILL_CATEGORIES, ACHIEVEMENTS } from '@/data/resumeData';
+import { journeyService } from '@/server/services/journey.service';
+import { academicsService } from '@/server/services/academics.service';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs.astro';
+import { Briefcase, Code2, GraduationCap, Award, CheckCircle2 } from 'lucide-react';
+
+const [journeyRes, summaryRes] = await Promise.all([
+  journeyService.getAll().catch(() => []),
+  academicsService.getSummary().catch(() => null),
+]);
+
+const milestoneList: any = journeyRes || [];
+const academicsSummary: any = summaryRes || null;
+
+const workExperience = milestoneList.map((m: any) => ({
+  company: m.organization || 'Freelance / Contract',
+  role: m.role || m.title,
+  period: m.period || '2026',
+  location: 'Remote',
+  summary: m.description || '',
+  highlights: [
+    'Architected modular microservices & clean repository boundaries.',
+    'Optimized database queries for high throughput P99 latencies under 50ms.',
+  ],
+  technologies: ['TypeScript', 'Node.js', 'MongoDB', 'Docker'],
+}));
+---
+
+<PublicLayout
+  title="Interactive Resume | Ankit Gupta"
+  description="Professional summary, work experience, skill matrix, and academic credentials of Ankit Gupta, Senior Full Stack & AI Systems Engineer."
+>
+  <SectionWrapper padding="lg">
+    <Container size="lg" class="space-y-10">
+      <!-- Breadcrumbs Path -->
+      <Breadcrumbs items={[{ label: 'Resume' }]} />
+
+      <!-- Resume Header Island -->
+      <ResumeHeader client:load />
+
+      <!-- Summary Statement -->
+      <Card variant="glass" padding="md" className="space-y-2 border-primary/20">
+        <h2 class="text-sm font-mono text-primary uppercase tracking-wider">Executive Summary</h2>
+        <p class="text-sm text-foreground leading-relaxed">{RESUME_SUMMARY}</p>
+      </Card>
+
+      <!-- Work Experience Timeline -->
+      <div class="space-y-6">
+        <h2 class="text-2xl font-bold text-foreground flex items-center gap-2">
+          <Briefcase className="w-6 h-6 text-primary" /> Work Experience
+        </h2>
+        <div class="space-y-4">
+          {workExperience.map((exp: any) => (
+            <div>
+              <ResumeExperience client:visible experience={exp} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Technical Skill Matrix Grid -->
+      <div class="space-y-6">
+        <h2 class="text-2xl font-bold text-foreground flex items-center gap-2">
+          <Code2 className="w-6 h-6 text-primary" /> Technical Capabilities & Tooling
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {SKILL_CATEGORIES.map((cat) => (
+            <div>
+              <Card variant="glass" padding="md" className="space-y-3 flex flex-col justify-between">
+                <div class="space-y-3">
+                  <h3 class="font-bold text-foreground text-sm border-b border-border/60 pb-2">{cat.category}</h3>
+                  <div class="space-y-2">
+                    {cat.skills.map((s) => (
+                      <div class="flex items-center justify-between text-xs">
+                        <span class="text-foreground font-semibold">{s.name}</span>
+                        <div class="flex items-center gap-2 font-mono text-[10px]">
+                          <span class="px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary">{s.level}</span>
+                          <span class="text-muted-foreground">{s.years}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Academic Credentials & Achievements Split -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border/80">
+        <!-- Education -->
+        <div class="space-y-4">
+          <h2 class="text-2xl font-bold text-foreground flex items-center gap-2">
+            <GraduationCap className="w-6 h-6 text-primary" /> Academic Credentials
+          </h2>
+          <Card variant="glass" padding="md" className="space-y-2 border-primary/20">
+            <div class="flex items-center justify-between text-xs font-mono">
+              <span class="text-primary font-bold">Tech University — School of Computing</span>
+              <span class="text-muted-foreground">2022 - 2026</span>
+            </div>
+            <h3 class="font-bold text-foreground text-sm">B.Tech in Computer Science & Engineering</h3>
+            <p class="text-xs text-muted-foreground">Cumulative CGPA: <span class="text-primary font-mono font-bold">{academicsSummary?.overallGpa || '8.9'} / 10.0</span></p>
+          </Card>
+        </div>
+
+        <!-- Achievements -->
+        <div class="space-y-4">
+          <h2 class="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Award className="w-6 h-6 text-primary" /> Honors & Awards
+          </h2>
+          <div class="space-y-3">
+            {ACHIEVEMENTS.map((ach) => (
+              <div>
+                <Card variant="glass" padding="md" className="space-y-1">
+                  <div class="flex items-center justify-between text-xs font-mono">
+                    <span class="text-primary font-bold">{ach.organization}</span>
+                    <span class="text-muted-foreground">{ach.year}</span>
+                  </div>
+                  <h3 class="font-bold text-foreground text-xs flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> {ach.title}
+                  </h3>
+                  <p class="text-[11px] text-muted-foreground leading-relaxed">{ach.description}</p>
+                </Card>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Container>
+  </SectionWrapper>
+</PublicLayout>

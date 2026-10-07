@@ -1,0 +1,165 @@
+---
+import SEO from '@/components/seo/SEO.astro';
+import SkipToContent from '@/components/shell/SkipToContent.astro';
+import { Navbar } from '@/components/navigation/Navbar';
+import { Footer } from '@/components/footer/Footer';
+import { ScrollToTop } from '@/components/shell/ScrollToTop';
+import { ToastContainer } from '@/components/ui/ToastContainer';
+import { LoadingIndicator } from '@/components/shell/LoadingIndicator';
+import { MobileBottomNav } from '@/components/navigation/MobileBottomNav';
+import { authenticateRequest } from '@/server/middleware/auth.middleware';
+import { settingsService } from '@/server/services/settings.service';
+import '@/styles/globals.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+}
+
+const { title, description, image, type = 'website' } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+// Query global settings from MongoDB server-side
+const siteSettings: any = await settingsService.getSettings().catch(() => null);
+
+const resolvedTitle = title || siteSettings?.siteName || 'Ankit Gupta — Lead Full-Stack & AI Systems Engineer';
+const resolvedDescription = description || siteSettings?.siteDescription || 'Personal Operating System documenting engineering projects, learning progress, technical blogs, and academic growth.';
+
+// Check auth state server-side so navbar can show "Dashboard" link for admin
+const currentUser = await authenticateRequest(Astro.request);
+const isAuthenticated = !!currentUser;
+
+const navItems = [
+  { label: 'Home', href: '/' },
+  { label: 'Projects', href: '/projects' },
+  { label: 'Learning', href: '/learning' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'Journey', href: '/journey' },
+  { label: 'Academics', href: '/academics' },
+  { label: 'Freelancing', href: '/freelancing' },
+  { label: 'Contact', href: '/contact' },
+];
+
+const footerLinkGroups = [
+  {
+    title: 'Ecosystem',
+    links: [
+      { label: 'Projects', href: '/projects' },
+      { label: 'Blog Articles', href: '/blog' },
+      { label: 'Learning Tracks', href: '/learning' },
+      { label: 'Journey Timeline', href: '/journey' },
+    ],
+  },
+  {
+    title: 'Professional',
+    links: [
+      { label: 'Academics & CGPA', href: '/academics' },
+      { label: 'Freelancing & Services', href: '/freelancing' },
+      { label: 'Contact', href: '/contact' },
+    ],
+  },
+];
+const footerGithub =
+  (Array.isArray(siteSettings?.socialLinks)
+    ? siteSettings.socialLinks.find((s: any) => s.platform === 'github')?.url
+    : siteSettings?.socialLinks?.github) ||
+  siteSettings?.githubUrl ||
+  'https://github.com/ankit-gupta';
+
+const footerLinkedin =
+  (Array.isArray(siteSettings?.socialLinks)
+    ? siteSettings.socialLinks.find((s: any) => s.platform === 'linkedin')?.url
+    : siteSettings?.socialLinks?.linkedin) ||
+  siteSettings?.linkedinUrl ||
+  'https://linkedin.com/in/ankit-gupta';
+
+const footerTwitter =
+  (Array.isArray(siteSettings?.socialLinks)
+    ? siteSettings.socialLinks.find((s: any) => s.platform === 'twitter')?.url
+    : siteSettings?.socialLinks?.twitter) ||
+  siteSettings?.twitterUrl ||
+  'https://twitter.com/ankit_dev';
+
+const footerLeetcode =
+  (Array.isArray(siteSettings?.socialLinks)
+    ? siteSettings.socialLinks.find((s: any) => s.platform === 'leetcode')?.url
+    : siteSettings?.socialLinks?.leetcode) ||
+  siteSettings?.leetcodeUrl ||
+  'https://leetcode.com/u/ankitgupta';
+
+const footerGoogleCloud =
+  (Array.isArray(siteSettings?.socialLinks)
+    ? siteSettings.socialLinks.find((s: any) => s.platform === 'googlecloud' || s.platform === 'google_cloud' || s.platform === 'gcp')?.url
+    : siteSettings?.socialLinks?.googleCloud || siteSettings?.socialLinks?.gcp) ||
+  siteSettings?.googleCloudUrl ||
+  'https://www.cloudskillsboost.google/public_profiles/ankitgupta';
+
+const footerEmail = siteSettings?.contactEmail || 'ankitgupta72724@gmail.com';
+
+const footerSocialLinks = [
+  { platform: 'github' as const, url: footerGithub, label: 'GitHub' },
+  { platform: 'linkedin' as const, url: footerLinkedin, label: 'LinkedIn' },
+  { platform: 'leetcode' as const, url: footerLeetcode, label: 'LeetCode' },
+  { platform: 'googlecloud' as const, url: footerGoogleCloud, label: 'Google Cloud' },
+  { platform: 'twitter' as const, url: footerTwitter, label: 'Twitter' },
+  { platform: 'email' as const, url: `mailto:${footerEmail}`, label: 'Email' },
+];
+---
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <SEO title={resolvedTitle} description={resolvedDescription} image={image} type={type} />
+    <script is:inline>
+      (function() {
+        const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('theme') : null;
+        if (stored === 'light') {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('light');
+        } else {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        }
+      })();
+    </script>
+  </head>
+  <body class="bg-background text-foreground antialiased min-h-screen flex flex-col selection:bg-primary/25 selection:text-primary pb-16 md:pb-0">
+    <SkipToContent />
+
+    <!-- Route Transition Progress Line -->
+    <LoadingIndicator client:load />
+
+    <!-- Application Shell Navbar -->
+    <Navbar
+      client:load
+      items={navItems}
+      currentPath={currentPath}
+      isAuthenticated={isAuthenticated}
+      authorName={siteSettings?.authorName || 'Ankit Gupta'}
+      authorAvatar="/images/ankit_avatar_head.png"
+      siteSubtitle="Portfolio OS"
+    />
+
+    <!-- Main Page Content Shell -->
+    <main id="main-content" class="flex-1 w-full relative focus:outline-none overflow-x-hidden">
+      <slot />
+    </main>
+
+    <!-- Global Application Footer -->
+    <Footer linkGroups={footerLinkGroups} socialLinks={footerSocialLinks} />
+
+    <!-- Floating Toast Popups -->
+    <ToastContainer client:load />
+
+    <!-- Floating Utilities -->
+    <ScrollToTop client:idle />
+
+    <!-- Mobile Persistent Bottom Navigation Bar -->
+    <MobileBottomNav client:load currentPath={currentPath} isAuthenticated={isAuthenticated} />
+  </body>
+</html>

@@ -1,0 +1,68 @@
+---
+import StructuredData from './StructuredData.astro';
+import { siteConfig } from '@/config/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  canonicalUrl?: string;
+  type?: 'website' | 'article' | 'project' | 'person';
+  publishedTime?: string;
+  authorName?: string;
+  breadcrumbs?: { name: string; item: string }[];
+}
+
+const {
+  title = siteConfig.title,
+  description = siteConfig.description,
+  image = '/og-image.jpg',
+  canonicalUrl = Astro.url.href,
+  type = 'website',
+  publishedTime,
+  authorName = siteConfig.author,
+  breadcrumbs = [],
+} = Astro.props;
+
+const siteTitle = title.includes('Portfolio OS') ? title : `${title} | Portfolio OS`;
+const ogImageUrl = image.startsWith('http') ? image : new URL(image, Astro.url).href;
+---
+
+<!-- Technical & Primary Meta Tags -->
+<title>{siteTitle}</title>
+<meta name="title" content={siteTitle} />
+<meta name="description" content={description} />
+<meta name="author" content={authorName} />
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+<meta name="theme-color" content="#090d16" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="canonical" href={canonicalUrl} />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content={type === 'article' ? 'article' : 'website'} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:title" content={siteTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImageUrl} />
+<meta property="og:site_name" content={siteConfig.name} />
+{publishedTime && <meta property="article:published_time" content={publishedTime} />}
+
+<!-- Twitter Cards -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={canonicalUrl} />
+<meta name="twitter:title" content={siteTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageUrl} />
+<meta name="twitter:creator" content="@ankitgupta" />
+
+<!-- Schema.org JSON-LD -->
+<StructuredData
+  type={type}
+  title={siteTitle}
+  description={description}
+  image={ogImageUrl}
+  url={canonicalUrl}
+  datePublished={publishedTime}
+  authorName={authorName}
+  breadcrumbs={breadcrumbs}
+/>
